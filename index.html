@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Velo de la Ignorancia</title>
+    <style>
+        :root {
+            --bg-color: #1a1a24;
+            --container-bg: #2a2a35;
+            --text-main: #e0e0e0;
+            --accent: #4ade80;
+            --accent-hover: #22c55e;
+            --danger: #f87171;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .game-container {
+            background-color: var(--container-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 { margin-top: 0; color: var(--accent); }
+        
+        .status-bar {
+            background: #111;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .class-card {
+            background: #3a3a48;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #666;
+            transition: all 0.3s ease;
+        }
+
+        .controls button {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .controls button:hover { background-color: #777; }
+        .controls span { display: inline-block; width: 40px; font-weight: bold; font-size: 1.2em; }
+
+        .btn-main {
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover { background-color: var(--accent-hover); }
+        .btn-main:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+
+        #result-screen { display: none; }
+        
+        .highlight { color: var(--accent); font-weight: bold; font-size: 1.5em; }
+        .bad-outcome { color: var(--danger); font-weight: bold; font-size: 1.5em; }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="setup-screen">
+        <h1>La Posición Original</h1>
+        <p>Estás detrás del <strong>Velo de la Ignorancia</strong>. Tienes 30 puntos de recursos (salud, riqueza, oportunidades) para repartir entre 3 clases sociales.</p>
+        <p>No sabes en cuál nacerás. Reparte con sabiduría.</p>
+
+        <div class="status-bar">
+            Recursos Disponibles: <span id="points-left" style="color: var(--accent);">30</span>
+        </div>
+
+        <div class="class-card">
+            <span>Clase Social A</span>
+            <div class="controls">
+                <button onclick="changePoints(0, -1)">-</button>
+                <span id="class-0-pts">0</span>
+                <button onclick="changePoints(0, 1)">+</button>
+            </div>
+        </div>
+
+        <div class="class-card">
+            <span>Clase Social B</span>
+            <div class="controls">
+                <button onclick="changePoints(1, -1)">-</button>
+                <span id="class-1-pts">0</span>
+                <button onclick="changePoints(1, 1)">+</button>
+            </div>
+        </div>
+
+        <div class="class-card">
+            <span>Clase Social C</span>
+            <div class="controls">
+                <button onclick="changePoints(2, -1)">-</button>
+                <span id="class-2-pts">0</span>
+                <button onclick="changePoints(2, 1)">+</button>
+            </div>
+        </div>
+
+        <button class="btn-main" id="btn-nacer" onclick="cruzarVelo()" disabled>Cruzar el Velo (Nacer)</button>
+    </div>
+
+    <div class="game-container" id="result-screen">
+        <h1>El Velo ha Caído</h1>
+        <p id="birth-result"></p>
+        <p id="life-quality"></p>
+        <p id="rawls-feedback"></p>
+        <button class="btn-main" onclick="reiniciarJuego()">Volver a la Posición Original</button>
+    </div>
+
+    <script>
+        const maxPoints = 30;
+        let pointsLeft = maxPoints;
+        let classPoints = [0, 0, 0];
+
+        function changePoints(index, amount) {
+            // Evitar valores negativos
+            if (classPoints[index] + amount < 0) return;
+            // Evitar gastar más puntos de los disponibles
+            if (amount > 0 && pointsLeft === 0) return;
+
+            classPoints[index] += amount;
+            pointsLeft -= amount;
+
+            document.getElementById(`class-${index}-pts`).innerText = classPoints[index];
+            document.getElementById('points-left').innerText = pointsLeft;
+
+            // Solo permitir nacer si se han gastado todos los puntos
+            document.getElementById('btn-nacer').disabled = pointsLeft > 0;
+        }
+
+        function cruzarVelo() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+
+            // Selección aleatoria de la clase (0, 1 o 2)
+            const assignedClassIndex = Math.floor(Math.random() * 3);
+            const letters = ['A', 'B', 'C'];
+            const assignedClass = letters[assignedClassIndex];
+            const myPoints = classPoints[assignedClassIndex];
+
+            let birthText = `Has nacido en la <strong>Clase Social ${assignedClass}</strong>.`;
+            document.getElementById('birth-result').innerHTML = birthText;
+
+            let qualityText = `Tus recursos para vivir son: <span class="${myPoints >= 10 ? 'highlight' : 'bad-outcome'}">${myPoints} puntos</span>.`;
+            document.getElementById('life-quality').innerHTML = qualityText;
+
+            // Lógica de feedback basada en el principio Maximin de Rawls
+            let feedback = "";
+            const minPoints = Math.min(...classPoints);
+            const maxDiff = Math.max(...classPoints) - minPoints;
+
+            if (maxDiff === 0) {
+                feedback = "¡Perfecto! Aplicaste el <strong>Principio Maximin</strong> de Rawls. Al distribuir equitativamente (10-10-10), maximizaste el nivel de la peor situación posible. Tu supervivencia estaba garantizada sin importar dónde nacieras.";
+            } else if (minPoints === 0) {
+                feedback = "Jugaste a la lotería y creaste una sociedad con desigualdad extrema. Rawls argumentaría que esto es irracional bajo el Velo de la Ignorancia, ya que te arriesgaste a nacer en la miseria absoluta.";
+            } else {
+                feedback = "Creaste una sociedad con ciertas desigualdades. Rawls aceptaría esto <em>solo si</em> esa desigualdad beneficiara de alguna manera a los menos aventajados (Principio de Diferencia), pero en este modelo puro, corriste un riesgo innecesario.";
+            }
+
+            document.getElementById('rawls-feedback').innerHTML = feedback;
+        }
+
+        function reiniciarJuego() {
+            pointsLeft = maxPoints;
+            classPoints = [0, 0, 0];
+            
+            for(let i=0; i<3; i++) {
+                document.getElementById(`class-${i}-pts`).innerText = '0';
+            }
+            document.getElementById('points-left').innerText = maxPoints;
+            document.getElementById('btn-nacer').disabled = true;
+
+            document.getElementById('setup-screen').style.display = 'block';
+            document.getElementById('result-screen').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
